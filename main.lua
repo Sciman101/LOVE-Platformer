@@ -1,3 +1,6 @@
+require 'entity.lua'
+require 'tilemap.lua'
+
 local canvas
 local keys = {}
 local keys_prev = {}
