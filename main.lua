@@ -11,31 +11,14 @@ local debugInfo = false
 local tilemap = Tilemap:new(40,23,16)
 
 -- Define the player
-player = {
-	-- Basic properties
-	x = 320-16,
-	y = 180-16,
-	size=16,
-	vx = 0,
-	vy = 0,
-	facing = 1,
-	-- Movement
-	gravity = 500,
-	moveSpeed = 128,
-	jumpSpeed = 350,
-	acc = 500,
-	fric = 5,
-	grounded = false,
-	wasGrounded = false,
-	sprite = love.graphics.newImage("player16.png"),
-	-- Quality of life
-	jumpBuffer = 0,
-	coyoteTime = 0
-}
+player = Entity:new(320,180,16,love.graphics.newImage('player16.png'),tilemap)
+player.coyoteTime = 0
+player.jumpBuffer = 0
+player.moveSpeed = 128
+player.jumpSpeed = 350
+player.acc = 500
 -- Define player loop
 function player:update(dt)
-	-- Gravity
-	self.vy = self.vy + self.gravity * dt
 	
 	-- Horizontal movement
 	if keys.right then
@@ -48,6 +31,7 @@ function player:update(dt)
 		self.vx = self.vx - self.vx * dt * self.fric
 		if math.abs(self.vx) <= dt then self.vx = 0 end
 	end
+	self.flipX = self.facing ~= 1
 	
 	-- Jumping
 	if keys.space and not keys_prev.space then
@@ -64,28 +48,6 @@ function player:update(dt)
 		end
 		self.jumpBuffer = math.max(0,self.jumpBuffer-dt)
 	end
-	
-	
-	-- Check for collisions
-	-- Horizontal
-	local colTile = self:checkMove(self.vx * dt,0)
-	if colTile ~= 0 then
-		self.x = math.floor(self.x / tilemap.size + 0.5) * tilemap.size
-		self.vx = 0
-	end
-	self.x = self.x + self.vx * dt
-	
-	-- Vertical
-	colTile = self:checkMove(0,self.vy * dt)
-	self.grounded = false
-	if colTile ~= 0 then
-		self.y = math.floor(self.y / tilemap.size + 0.5) * tilemap.size
-		self.grounded = self.vy > 0
-		self.vy = 0
-	end	
-	self.y = self.y + self.vy * dt
-	
-	
 	-- Coyote time
 	if self.coyoteTime > 0 then
 		self.coyoteTime = self.coyoteTime - dt
@@ -93,36 +55,9 @@ function player:update(dt)
 		self.coyoteTime = 0.05
 	end
 	
-	-- Update past grounded
-	self.wasGrounded = self.grounded
-end
-function player:draw()
-	local px = self.x
-	if self.facing == -1 then px = px + self.size end
-	love.graphics.draw(self.sprite,px,self.y,0,self.facing,1)
-end
-function player:checkMove(dx,dy)
-	-- Check for collisions
-	local xCol = 0
-	local yCol = 0
-	-- Horizontal
-	if dx ~= 0 then
-		local xSide = dx > 0 and self.x + self.size or self.x
-		xCol = tilemap:getTilePixel(xSide + dx,self.y+1)
-		if xCol == 0 then xCol = tilemap:getTilePixel(xSide + dx,self.y+self.size-1) end
-	end
-	-- Vertical
-	if dy ~= 0 then
-		local ySide = dy > 0 and self.y + self.size or self.y
-		yCol = tilemap:getTilePixel(self.x+1,ySide+dy)
-		if yCol == 0 then yCol = tilemap:getTilePixel(self.x+self.size-1,ySide+dy) end
-	end
+	-- Call 'super'
+	getmetatable(self).update(self,dt)
 	
-	if xCol ~= 0 then
-		return xCol
-	else
-		return yCol
-	end
 end
 
 -- Setup game

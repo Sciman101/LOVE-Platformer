@@ -1,6 +1,5 @@
 Entity = {
-	__metatable = nil,
-	
+
 	-- Collision checking function
 	checkMove = function(self,dx,dy)
 		-- Check for collisions
@@ -9,14 +8,14 @@ Entity = {
 		-- Horizontal
 		if dx ~= 0 then
 			local xSide = dx > 0 and self.x + self.size or self.x
-			xCol = self.tilemap:checkPixel(xSide + dx,self.y+1)
-			if xCol == 0 then xCol = self.tilemap:checkPixel(xSide + dx,self.y+self.size-1) end
+			xCol = self.tilemap:getTilePixel(xSide + dx,self.y+1)
+			if xCol == 0 then xCol = self.tilemap:getTilePixel(xSide + dx,self.y+self.size-1) end
 		end
 		-- Vertical
 		if dy ~= 0 then
 			local ySide = dy > 0 and self.y + self.size or self.y
-			yCol = self.tilemap:checkPixel(self.x+1,ySide+dy)
-			if yCol == 0 then yCol = self.tilemap:checkPixel(self.x+self.size-1,ySide+dy) end
+			yCol = self.tilemap:getTilePixel(self.x+1,ySide+dy)
+			if yCol == 0 then yCol = self.tilemap:getTilePixel(self.x+self.size-1,ySide+dy) end
 		end
 		
 		-- Priopritize horizontal collisions
@@ -52,13 +51,6 @@ Entity = {
 		self.y = self.y + self.vy * dt
 		
 		
-		-- Coyote time
-		if self.coyoteTime > 0 then
-			self.coyoteTime = self.coyoteTime - dt
-		elseif self.wasGrounded and not self.grounded then
-			self.coyoteTime = 0.05
-		end
-		
 		-- Update past grounded
 		self.wasGrounded = self.grounded
 	
@@ -70,18 +62,18 @@ Entity = {
 		local py = self.y
 		if self.flipX then px = px + self.size end
 		if self.flipY then py = py + self.size end
-		love.graphics.draw(self.sprite,px,py,0,self.facing,self.flipX and 1 or -1,self.flipY and 1 or -1)
+		love.graphics.draw(self.sprite,px,py,0,self.flipX and -1 or 1,self.flipY and -1 or 1)
 	end
 }
 Entity.__index = Entity
 
 -- Constructor
-function Entity:new(x,y,size,sprite)
+function Entity:new(x,y,size,sprite,tilemap)
 	local ent = setmetatable({},Entity)
 	
 	-- Position/velocity
 	ent.x = x or 0
-	ent.y = y = 0
+	ent.y = y or 0
 	ent.vx = 0
 	ent.vy = 0
 	-- Physical properties
@@ -95,7 +87,7 @@ function Entity:new(x,y,size,sprite)
 	ent.flipX = false
 	ent.flipY = false
 	-- Reference to game logic
-	ent.tilemap = nil
+	ent.tilemap = tilemap
 	
 	return ent
 end

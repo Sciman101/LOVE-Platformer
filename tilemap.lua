@@ -1,5 +1,4 @@
 Tilemap = {
-	__metatable = nil,
 	
 	-- Set a tile by position
 	setTile = function(self,x,y,t,update)
