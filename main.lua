@@ -1,5 +1,5 @@
-require 'entity.lua'
-require 'tilemap.lua'
+require 'entity'
+require 'tilemap'
 
 local canvas
 local keys = {}
@@ -8,42 +8,7 @@ local keys_prev = {}
 local debugInfo = false
 
 -- Define tile drawing nonsense
-tilemap = {
-	data = {},
-	tiles = {},
-	width = 40,
-	height = 23,
-	size = 16,
-	canvas = nil
-}
--- Define tilemap functions
-function tilemap:setup(w,h,s)
-	self.width = w
-	self.height = h or w
-	self.size = s or 16
-	self.canvas = love.graphics.newCanvas(self.width * self.size,self.height * self.size)
-end
-function tilemap:redraw()
-	love.graphics.setCanvas(tilemap.canvas)
-	love.graphics.clear(0,0,0,0)
-	local t = 0
-	for x=1, self.width do
-		for y=1, self.height do
-			t = self.data[x][y]
-			if t ~= 0 then love.graphics.draw(self.tiles[t],(x-1)*self.size,(y-1)*self.size) end
-		end
-	end
-	love.graphics.setCanvas()
-end
-function tilemap:checkPixel(x,y)
-	local tileX = math.floor(x / self.size) + 1
-	local tileY = math.floor(y / self.size) + 1
-	if tileX > 0 and tileY > 0 and tileX <= self.width and tileY <= self.height then
-		return self.data[tileX][tileY]
-	else
-		return -1
-	end
-end
+local tilemap = Tilemap:new(40,23,16)
 
 -- Define the player
 player = {
@@ -143,14 +108,14 @@ function player:checkMove(dx,dy)
 	-- Horizontal
 	if dx ~= 0 then
 		local xSide = dx > 0 and self.x + self.size or self.x
-		xCol = tilemap:checkPixel(xSide + dx,self.y+1)
-		if xCol == 0 then xCol = tilemap:checkPixel(xSide + dx,self.y+self.size-1) end
+		xCol = tilemap:getTilePixel(xSide + dx,self.y+1)
+		if xCol == 0 then xCol = tilemap:getTilePixel(xSide + dx,self.y+self.size-1) end
 	end
 	-- Vertical
 	if dy ~= 0 then
 		local ySide = dy > 0 and self.y + self.size or self.y
-		yCol = tilemap:checkPixel(self.x+1,ySide+dy)
-		if yCol == 0 then yCol = tilemap:checkPixel(self.x+self.size-1,ySide+dy) end
+		yCol = tilemap:getTilePixel(self.x+1,ySide+dy)
+		if yCol == 0 then yCol = tilemap:getTilePixel(self.x+self.size-1,ySide+dy) end
 	end
 	
 	if xCol ~= 0 then
@@ -167,14 +132,10 @@ function love.load()
 	love.graphics.setDefaultFilter('nearest', 'nearest', 0)
 	
 	-- Setup tilemap
-	tilemap:setup(40,23,16)
 	for x=1, tilemap.width do
-		tilemap.data[x] = {}
 		for y=1, tilemap.height do
 			if x == 1 or y == 1 or x == tilemap.width or y == tilemap.height then
-				tilemap.data[x][y] = 1
-			else
-				tilemap.data[x][y] = 0
+				tilemap:setTile(x,y,1)
 			end
 		end
 	end
@@ -183,12 +144,11 @@ function love.load()
 		love.graphics.newImage("metal16.png")
 	}
 	-- Redraw the tilemap canvas
-	tilemap:redraw()
+	tilemap:refresh()
 end
 
 -- Update custom key table
 function love.keypressed(key)
-
 	if key == '`' then
 		debugInfo = not debugInfo
 	end
@@ -201,16 +161,13 @@ end
 
 -- DEBUG CODE to draw walls
 function love.mousemoved(x,y)
+	x = x/2
+	y = y/2
 	if love.mouse.isDown(1,2) then
-		local tileX = math.floor(x / 2 / tilemap.size) + 1
-		local tileY = math.floor(y / 2 / tilemap.size) + 1
-		if tileX > 0 and tileY > 0 and tileX <= tilemap.width and tileY <= tilemap.height then
-			if love.mouse.isDown(1) then
-				tilemap.data[tileX][tileY] = 1
-			elseif love.mouse.isDown(2) then
-				tilemap.data[tileX][tileY] = 0
-			end
-			tilemap:redraw()
+		if love.mouse.isDown(1) then
+			tilemap:setTilePixel(x,y,1,true)
+		elseif love.mouse.isDown(2) then
+			tilemap:setTilePixel(x,y,0,true)
 		end
 	end
 end
@@ -230,14 +187,10 @@ function love.draw()
 	
 	-- Do normal drawing here
 	love.graphics.clear(0,0,0)
-	love.graphics.draw(tilemap.canvas,0,0)
+	tilemap:draw()
 	player:draw()
-	
-	-- local tx = math.floor(player.x / tilemap.size) * tilemap.size
-	-- local ty = math.floor(player.y / tilemap.size) * tilemap.size
-	-- love.graphics.rectangle('line',tx,ty,tilemap.size,tilemap.size)
-	-- love.graphics.print(tilemap.checkPixel(player.x,player.y),tx,ty)
-	
+
+	-- Debug info
 	if debugInfo then 
 		love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
 		love.graphics.print("Player Motion: ("..tostring(player.vx)..","..tostring(player.vy)..")", 10, 22)
@@ -246,6 +199,7 @@ function love.draw()
 		love.graphics.print("Grounded : "..tostring(player.grounded)..","..tostring(player.wasGrounded), 10, 58)
 	end
 	
+	-- Reset canvas and draw scaled up
 	love.graphics.setCanvas()
 	love.graphics.draw(canvas,0,0,0,2)
 end

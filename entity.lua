@@ -1,34 +1,5 @@
 Entity = {
-
-	prototype = { -- Prototype instance
-		-- Position/velocity
-		x = 0,
-		y = 0,
-		vx = 0,
-		vy = 0,
-		-- Physical properties
-		size = 16,
-		gravity = 500,
-		fric = 20,
-		grounded = false,
-		wasGrounded = false,
-		-- Visuals
-		sprite = nil,
-		flipX = false,
-		flipY = false,
-		-- Reference to game logic
-		tilemap = nil
-	},
-	
-	__index = Entity.prototype,
 	__metatable = nil,
-	
-	-- Constructor
-	new = function(self,x,y,tilemap,size,sprite)
-		local ent = {x=x,y=y,tilemap=tilemap,size=size,sprite=sprite}
-		setmetatable(ent,Entity)
-		return ent
-	end,
 	
 	-- Collision checking function
 	checkMove = function(self,dx,dy)
@@ -101,6 +72,30 @@ Entity = {
 		if self.flipY then py = py + self.size end
 		love.graphics.draw(self.sprite,px,py,0,self.facing,self.flipX and 1 or -1,self.flipY and 1 or -1)
 	end
-	
-
 }
+Entity.__index = Entity
+
+-- Constructor
+function Entity:new(x,y,size,sprite)
+	local ent = setmetatable({},Entity)
+	
+	-- Position/velocity
+	ent.x = x or 0
+	ent.y = y = 0
+	ent.vx = 0
+	ent.vy = 0
+	-- Physical properties
+	ent.size = size or 16
+	ent.gravity = 500
+	ent.fric = 20
+	ent.grounded = false
+	ent.wasGrounded = false
+	-- Visuals
+	ent.sprite = sprite
+	ent.flipX = false
+	ent.flipY = false
+	-- Reference to game logic
+	ent.tilemap = nil
+	
+	return ent
+end
