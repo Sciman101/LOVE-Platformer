@@ -3,9 +3,11 @@ Tilemap = {
 	-- Set a tile by position
 	setTile = function(self,x,y,t,update)
 		if x > 0 and y > 0 and x <= self.width and y <= self.height then
-			self.data[y][x] = t
-			if update then 
-				self:refresh()
+			if self.data[y][x] ~= t then
+				self.data[y][x] = t
+				if update then 
+					self:refresh()
+				end
 			end
 		end
 	end,

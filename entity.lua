@@ -39,6 +39,7 @@ Entity = {
 			self.vx = 0
 		end
 		self.x = self.x + self.vx * dt
+		self:onTileCollision(colTile)
 		
 		-- Vertical
 		colTile = self:checkMove(0,self.vy * dt)
@@ -49,11 +50,17 @@ Entity = {
 			self.vy = 0
 		end	
 		self.y = self.y + self.vy * dt
+		self:onTileCollision(colTile)
 		
 		
 		-- Update past grounded
 		self.wasGrounded = self.grounded
 	
+	end,
+	
+	-- Called when we hit a tile
+	onTileCollision = function(self,tile)
+		-- By default, do nothing
 	end,
 	
 	-- Drawing function

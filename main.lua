@@ -6,6 +6,7 @@ local keys = {}
 local keys_prev = {}
 
 local debugInfo = false
+local currentTile = 1
 
 -- Define tile drawing nonsense
 local tilemap = Tilemap:new(40,23,16)
@@ -59,6 +60,9 @@ function player:update(dt)
 	getmetatable(self).update(self,dt)
 	
 end
+function player:onTileCollision(tile)
+	if tile == 2 then print('dead') end
+end
 
 -- Setup game
 function love.load()
@@ -76,7 +80,8 @@ function love.load()
 	end
 	-- Load tiles
 	tilemap.tiles = {
-		love.graphics.newImage("metal16.png")
+		love.graphics.newImage("metal16.png"),
+		love.graphics.newImage("red16.png")
 	}
 	-- Redraw the tilemap canvas
 	tilemap:refresh()
@@ -96,14 +101,24 @@ end
 
 -- DEBUG CODE to draw walls
 function love.mousemoved(x,y)
-	x = x/2
-	y = y/2
-	if love.mouse.isDown(1,2) then
-		if love.mouse.isDown(1) then
-			tilemap:setTilePixel(x,y,1,true)
-		elseif love.mouse.isDown(2) then
-			tilemap:setTilePixel(x,y,0,true)
+	if debugInfo then
+		x = x/2
+		y = y/2
+		if love.mouse.isDown(1,2) then
+			if love.mouse.isDown(1) then
+				tilemap:setTilePixel(x,y,currentTile,true)
+			elseif love.mouse.isDown(2) then
+				tilemap:setTilePixel(x,y,0,true)
+			end
 		end
+	end
+end
+-- DEBUG CODE change selected tile type
+function love.wheelmoved(x,y)
+	if debugInfo then
+		currentTile = currentTile + 1
+		if currentTile > #tilemap.tiles then currentTile = 1 end
+		if currentTile < 1 then currentTile = #tilemap.tiles end
 	end
 end
 
@@ -126,12 +141,18 @@ function love.draw()
 	player:draw()
 
 	-- Debug info
-	if debugInfo then 
+	if debugInfo then
 		love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
 		love.graphics.print("Player Motion: ("..tostring(player.vx)..","..tostring(player.vy)..")", 10, 22)
 		love.graphics.print("Jump Buffer: "..tostring(player.jumpBuffer), 10, 34)
 		love.graphics.print("Coyote Time: "..tostring(player.coyoteTime), 10, 46)
 		love.graphics.print("Grounded : "..tostring(player.grounded)..","..tostring(player.wasGrounded), 10, 58)
+		
+		local tileX = math.floor(love.mouse.getX() / 2 / tilemap.size) * tilemap.size
+		local tileY = math.floor(love.mouse.getY() / 2 / tilemap.size) * tilemap.size
+		love.graphics.setColor(1,1,1,0.5)
+		love.graphics.draw(tilemap.tiles[currentTile],tileX,tileY)
+		love.graphics.setColor(1,1,1,1)
 	end
 	
 	-- Reset canvas and draw scaled up
