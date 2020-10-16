@@ -1,5 +1,6 @@
 require 'entity'
 require 'tilemap'
+require 'scene'
 
 local canvas
 local keys = {}
@@ -9,28 +10,32 @@ local debugInfo = false
 local currentTile = 1
 
 -- Define tile drawing nonsense
-local tilemap = Tilemap:new(40,23,16)
+local scene = Scene:new()
+scene.tilemap = Tilemap:new(40,23,16)
 
 -- Define the player
-player = Entity:new(320,180,16,love.graphics.newImage('player16.png'),tilemap)
+local player = Entity:new(320,180,16,love.graphics.newImage('player16.png'),tilemap)
 player.coyoteTime = 0
 player.jumpBuffer = 0
 player.moveSpeed = 128
 player.jumpSpeed = 350
 player.acc = 500
+scene:addEntity(player)
+
+-- Add boxes
+scene:addEntity(Entity:new(64,180,16,love.graphics.newImage('red16.png'),tilemap))
+scene:addEntity(Entity:new(64,180-16,16,love.graphics.newImage('red16.png'),tilemap))
+scene:addEntity(Entity:new(64,180-32,16,love.graphics.newImage('red16.png'),tilemap))
 -- Define player loop
 function player:update(dt)
 	
 	-- Horizontal movement
-	if keys.right then
+	if keys.d then
 		self.vx = math.min(self.vx + self.acc * dt,self.moveSpeed)
 		self.facing = 1
-	elseif keys.left then
+	elseif keys.a then
 		self.vx = math.max(self.vx - self.acc * dt,-self.moveSpeed)
 		self.facing = -1
-	elseif self.grounded then
-		self.vx = self.vx - self.vx * dt * self.fric
-		if math.abs(self.vx) <= dt then self.vx = 0 end
 	end
 	self.flipX = self.facing ~= 1
 	
@@ -49,11 +54,9 @@ function player:update(dt)
 		end
 		self.jumpBuffer = math.max(0,self.jumpBuffer-dt)
 	end
-	-- Coyote time
+	
 	if self.coyoteTime > 0 then
-		self.coyoteTime = self.coyoteTime - dt
-	elseif self.wasGrounded and not self.grounded then
-		self.coyoteTime = 0.05
+		self.coyoteTime = math.max(self.coyoteTime - dt,0)
 	end
 	
 	-- Call 'super'
@@ -63,6 +66,11 @@ end
 function player:onTileCollision(tile)
 	if tile == 2 then print('dead') end
 end
+function player:onGroundedStateChange(state)
+	if not state then
+		self.coyoteTime = 0.05
+	end
+end
 
 -- Setup game
 function love.load()
@@ -71,20 +79,20 @@ function love.load()
 	love.graphics.setDefaultFilter('nearest', 'nearest', 0)
 	
 	-- Setup tilemap
-	for x=1, tilemap.width do
-		for y=1, tilemap.height do
-			if x == 1 or y == 1 or x == tilemap.width or y == tilemap.height then
-				tilemap:setTile(x,y,1)
+	for x=1, scene.tilemap.width do
+		for y=1, scene.tilemap.height do
+			if x == 1 or y == 1 or x == scene.tilemap.width or y == scene.tilemap.height then
+				scene.tilemap:setTile(x,y,1)
 			end
 		end
 	end
 	-- Load tiles
-	tilemap.tiles = {
+	scene.tilemap.tiles = {
 		love.graphics.newImage("metal16.png"),
 		love.graphics.newImage("red16.png")
 	}
 	-- Redraw the tilemap canvas
-	tilemap:refresh()
+	scene.tilemap:refresh()
 end
 
 -- Update custom key table
@@ -106,9 +114,9 @@ function love.mousemoved(x,y)
 		y = y/2
 		if love.mouse.isDown(1,2) then
 			if love.mouse.isDown(1) then
-				tilemap:setTilePixel(x,y,currentTile,true)
+				scene.tilemap:setTilePixel(x,y,currentTile,true)
 			elseif love.mouse.isDown(2) then
-				tilemap:setTilePixel(x,y,0,true)
+				scene.tilemap:setTilePixel(x,y,0,true)
 			end
 		end
 	end
@@ -117,14 +125,14 @@ end
 function love.wheelmoved(x,y)
 	if debugInfo then
 		currentTile = currentTile + 1
-		if currentTile > #tilemap.tiles then currentTile = 1 end
-		if currentTile < 1 then currentTile = #tilemap.tiles end
+		if currentTile > #scene.tilemap.tiles then currentTile = 1 end
+		if currentTile < 1 then currentTile = #scene.tilemap.tiles end
 	end
 end
 
 -- Update player and key data
 function love.update(dt)
-	player:update(dt)
+	scene:update(dt)
 	-- Update prev keys
 	for key, value in pairs(keys) do
 		keys_prev[key] = value
@@ -137,8 +145,7 @@ function love.draw()
 	
 	-- Do normal drawing here
 	love.graphics.clear(0,0,0)
-	tilemap:draw()
-	player:draw()
+	scene:draw()
 
 	-- Debug info
 	if debugInfo then
@@ -148,10 +155,10 @@ function love.draw()
 		love.graphics.print("Coyote Time: "..tostring(player.coyoteTime), 10, 46)
 		love.graphics.print("Grounded : "..tostring(player.grounded)..","..tostring(player.wasGrounded), 10, 58)
 		
-		local tileX = math.floor(love.mouse.getX() / 2 / tilemap.size) * tilemap.size
-		local tileY = math.floor(love.mouse.getY() / 2 / tilemap.size) * tilemap.size
+		local tileX = math.floor(love.mouse.getX() / 2 / scene.tilemap.size) * scene.tilemap.size
+		local tileY = math.floor(love.mouse.getY() / 2 / scene.tilemap.size) * scene.tilemap.size
 		love.graphics.setColor(1,1,1,0.5)
-		love.graphics.draw(tilemap.tiles[currentTile],tileX,tileY)
+		love.graphics.draw(scene.tilemap.tiles[currentTile],tileX,tileY)
 		love.graphics.setColor(1,1,1,1)
 	end
 	
