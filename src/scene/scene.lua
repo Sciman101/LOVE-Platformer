@@ -5,7 +5,7 @@ local json = require 'src.thirdparty.json'
 local Scene = Class('Scene')
 
 -- Define layer classes to use with LEd layer types
-local layerDefs = {
+local LAYER_TYPES = {
 	IntGrid = require 'src.scene.layer.tileDataLayer'
 }
 
@@ -61,9 +61,9 @@ function Scene:loadLEdTable(level,defs)
 
 		-- Add layer
 		local layerType = layer.__type
-		if layerDefs[layerType] then
+		if LAYER_TYPES[layerType] then
 			-- Create layer
-			local layerInst = layerDefs[layerType](layer,self)
+			local layerInst = LAYER_TYPES[layerType](layer,defs,self)
 			table.insert(self.layers,layerInst)
 		else
 			print("Unknown layer type " .. layerType)

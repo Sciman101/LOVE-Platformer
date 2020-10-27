@@ -7,7 +7,7 @@ local TileGraphicsLayer = Class('TileGraphicsLayer')
 TileGraphicsLayer:extends(Layer)
 
 -- Default constructor. No real behaviour
-function TileGraphicsLayer.new(inst,layerData,scene)
+function TileGraphicsLayer.new(inst,layerData,layerDefs,scene)
     inst.super.new(inst,layerData,scene)
 
     -- Define data

@@ -1,5 +1,5 @@
 **Current to-do list:**
-- Let tileDataLayer draw autoLayerTiles if they exist
+- ~~Let tileDataLayer draw autoLayerTiles if they exist~~
 - Add layer class for AutoLayer
 - Add layer class for TileLayer
 - Add layer class for Entity layer

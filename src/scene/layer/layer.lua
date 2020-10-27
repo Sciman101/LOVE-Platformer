@@ -3,7 +3,7 @@ local Class = require 'src.class'
 local Layer = Class('SceneLayer')
 
 -- Default constructor. No real behaviour
-function Layer.new(inst,layerData,scene)
+function Layer.new(inst,layerData,levelDefs,scene)
     inst.scene = scene
 end
 
