@@ -6,7 +6,10 @@ local Scene = Class('Scene')
 
 -- Define layer classes to use with LEd layer types
 local LAYER_TYPES = {
-	IntGrid = require 'src.scene.layer.tileDataLayer'
+	IntGrid = require 'src.scene.layer.tileDataLayer',
+	Tiles = require 'src.scene.layer.tileGraphicsLayer',
+	AutoLayer = require 'src.scene.layer.tileGraphicsLayer',
+	Entities = require 'src.scene.layer.entityLayer'
 }
 
 -- Constructor

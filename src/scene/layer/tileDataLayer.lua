@@ -1,29 +1,19 @@
 local Class = require 'src.class'
-local Layer = require 'src.scene.layer.layer'
+local TileGraphicsLayer = require 'src.scene.layer.tileGraphicsLayer'
 
 -- Define tile data layer
--- The tile data layer isn't actually rendered - it's just a grid of integers
+-- The tile data layer isn't rendered by default, and only holds a grid of integers used for collision
+-- checking or other purposes
 -- UNLESS the autotile rules are defined
 local TileDataLayer = Class('TileDataLayer')
-TileDataLayer:extends(Layer)
+TileDataLayer:extends(TileGraphicsLayer)
 
 -- Default constructor. No real behaviour
 function TileDataLayer.new(inst,layerData,levelDefs,scene)
-    inst.super.new(inst,layerData,scene)
+    TileGraphicsLayer.new(inst,layerData,levelDefs,scene)
 
     -- Define data
     inst.data = {}
-    inst.width = layerData.__cWid
-    inst.height = layerData.__cHei
-    inst.tileSize = layerData.__gridSize
-
-    inst.offX = layerData.pxOffsetX
-    inst.offY = layerData.pxOffsetY
-
-    -- Autotile drawing
-    inst.gfxData = {}
-    inst.tileSet = nil
-    inst.gfxCanvas = nil
 
     -- Populate data table with -1 values
     for x=1,inst.width do
@@ -36,38 +26,6 @@ function TileDataLayer.new(inst,layerData,levelDefs,scene)
     for i, tile in ipairs(layerData.intGrid) do
         inst.data[tile.coordId+1] = tile.v
         count = count + 1
-    end
-
-    -- Check for autoLayerTiles
-    if #layerData.autoLayerTiles then
-        inst.gfxCanvas = love.graphics.newCanvas(inst.width*inst.tileSize,inst.height*inst.tileSize)
-        inst.gfxData = layerData.autoLayerTiles
-        -- Find tileset
-        -- First, find layer definition
-        local tilesetUid = nil
-        for i, layerDef in ipairs(levelDefs.layers) do
-            if layerDef.identifier == layerData.__identifier then
-                tilesetUid = layerDef.autoTilesetDefUid
-                break
-            end
-        end
-        -- Once we have the tileset Uid, find the tileset
-        if tilesetUid then
-            for i, tileset in ipairs(levelDefs.tilesets) do
-                if tileset.uid == tilesetUid then
-                    -- Load tileset image
-                    -- This assumes scenes are held in /assets/scenes and tileset graphics somewhere in /assets/textures
-                    local path, count = string.gsub(tileset.relPath,'%.%.','assets')
-                    inst.tileSet = love.graphics.newImage(path)
-                    break
-                end
-            end
-        end
-        -- Did we find a tileset?
-        if inst.tileSet then
-            print('Successfully loaded tileset!')
-            inst:redrawGfxCanvas()
-        end
     end
 
 end
@@ -108,33 +66,6 @@ function TileDataLayer:setTilePixel(x,y,tile,update)
 	local tileX = math.floor((x-self.offX) / self.tileSize) + 1
 	local tileY = math.floor((y-self.offY) / self.tileSize) + 1
 	self:setTile(tileX,tileY,tile,update)
-end
-
--- Redraw the GFX canvas
-function TileDataLayer:redrawGfxCanvas()
-    if self.gfxCanvas then
-        -- Set canvas target
-        love.graphics.setCanvas(self.gfxCanvas)
-        love.graphics.clear()
-
-        -- Draw all tiles
-        for i, tile in ipairs(self.gfxData) do
-            -- Define quad to draw portion of tileset
-            local quad = love.graphics.newQuad(tile.src[1],tile.src[2],self.tileSize,self.tileSize,self.tileSet:getDimensions())
-            love.graphics.draw(self.tileSet,quad,tile.px[1],tile.px[2])
-            -- Free the quad
-            quad:release()
-        end
-        -- Reset canvas
-        love.graphics.setCanvas()
-    end
-end
-
--- Draw graphics if we have them
-function TileDataLayer:draw(dt)
-    if self.gfxCanvas then
-        love.graphics.draw(self.gfxCanvas,self.offX,self.offY)
-    end
 end
 
 return TileDataLayer
