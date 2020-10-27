@@ -1,8 +1,8 @@
-local Actions = require 'src/actions'
-local Entity = require 'src/entity/entity'
-local EntityPlayer = require 'src/entity/entityPlayer'
-local Tilemap = require 'src/tilemap'
-local Scene = require 'src/scene'
+local Actions = require 'src.actions'
+local Entity = require 'src.entity.entity'
+local EntityPlayer = require 'src.entity.entityPlayer'
+local Tilemap = require 'src.tilemap'
+local Scene = require 'src.scene.scene'
 
 local canvas
 
