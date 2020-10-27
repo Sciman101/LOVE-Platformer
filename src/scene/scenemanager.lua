@@ -1,0 +1,3 @@
+local SceneManager = {}
+
+return SceneManager

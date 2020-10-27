@@ -1,61 +1,87 @@
 local Class = require 'src.class'
 local Tilemap = require 'src.tilemap'
+local json = require 'src.thirdparty.json'
 
 local Scene = Class('Scene')
 
+-- Define layer classes to use with LEd layer types
+local layerDefs = {
+	IntGrid = require 'src.scene.layer.tileDataLayer'
+}
+
 -- Constructor
-function Scene.new(inst,w,h,s,actions)
-	
-	inst.tilemap = Tilemap(math.ceil(w/s),math.ceil(h/s),s)
-	inst.entities = {}
-	inst.actions = actions
-	
-end
+function Scene.new(inst,path,identifier)
 
--- Add a new entity and return it's ID
-function Scene:addEntity(ent)
-	for i=1,#self.entities+1 do
-		if self.entities[i] == nil then
-			self.entities[i] = ent
-			self.entities[i].scene = self
-			return i
+	inst.layers = {}
+	inst.width = nil
+	inst.height = nil
+	inst.sceneName = "Unloaded Scene"
+
+	-- Try and load file
+	local sceneFile = love.filesystem.newFile(path)
+
+	local ok, err = sceneFile:open('r')
+	if ok then
+
+		-- Read file into JSON
+		local sceneJson, size = sceneFile:read()
+		sceneFile:close() -- No longer need that
+		-- Decode raw string into JSON
+		local sceneData = json.decode(sceneJson)
+
+		-- Find the level
+		local levelFound = false
+		for k,level in pairs(sceneData.levels) do
+			if level.identifier == identifier then
+				inst:loadLEdTable(level,sceneData.defs)
+				levelFound = true
+				return
+			end
 		end
+	
+		if not levelFound then
+			print("Level " .. identifier .. " not present in " .. path)
+		end
+
+	else
+		print(err)
 	end
-	return -1 -- Unable to insert entity for some reason
 end
 
--- Get entity by id
-function Scene:getEntity(id)
-	if id > 0 and id <= #self.entities then
-		return self.entities[id]
-	end
-	return nil
-end
+-- Load scene from table
+function Scene:loadLEdTable(level,defs)
 
--- Remove an entity by it's id
-function Scene:removeEntity(id)
-	if id > 0 and id <= #self.entities then
-		self.entities[id] = nil
+	-- Get some data on the scene
+	self.width = level.pxWid
+	self.height = level.pxHei
+	self.sceneName = level.identifier
+
+	-- Iterate over layers
+	for i, layer in ipairs(level.layerInstances) do
+
+		-- Add layer
+		local layerType = layer.__type
+		if layerDefs[layerType] then
+			-- Create layer
+			local layerInst = layerDefs[layerType](layer,self)
+			table.insert(self.layers,layerInst)
+		else
+			print("Unknown layer type " .. layerType)
+		end
+
 	end
+
 end
 
 -- Process the scene
 function Scene:update(dt)
-	-- Process entities
-	for i=1,#self.entities+1 do
-		if self.entities[i] ~= nil then
-			self.entities[i]:update(dt)
-		end
-	end
 end
 
 -- Draw the scene
 function Scene:draw()
-	if self.tilemap then self.tilemap:draw() end
-	for i=1,#self.entities+1 do
-		if self.entities[i] ~= nil then
-			self.entities[i]:draw()
-		end
+	-- Draw layers
+	for i, layer in ipairs(self.layers) do
+		layer:draw()
 	end
 end
 
