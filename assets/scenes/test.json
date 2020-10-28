@@ -11,7 +11,7 @@
 	"defaultPivotY": 0,
 	"defaultGridSize": 16,
 	"bgColor": "#7F8093",
-	"nextUid": 17,
+	"nextUid": 21,
 	"minifyJson": false,
 	"exportTiled": false,
 	"defs": {

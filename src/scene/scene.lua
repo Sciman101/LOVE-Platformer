@@ -43,11 +43,11 @@ function Scene.new(inst,path,identifier)
 		end
 	
 		if not levelFound then
-			print("Level " .. identifier .. " not present in " .. path)
+			Console.error("Level " .. identifier .. " not present in " .. path)
 		end
 
 	else
-		print(err)
+		Console.error(err)
 	end
 end
 
@@ -69,10 +69,12 @@ function Scene:loadLEdTable(level,defs)
 			local layerInst = LAYER_TYPES[layerType](layer,defs,self)
 			table.insert(self.layers,layerInst)
 		else
-			print("Unknown layer type " .. layerType)
+			Console.error("Unknown layer type " .. layerType)
 		end
 
 	end
+
+	Console.log("Loaded scene '" .. level.identifier .. "'")
 
 end
 

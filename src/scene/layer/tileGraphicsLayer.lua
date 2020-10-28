@@ -26,7 +26,7 @@ function TileGraphicsLayer.new(inst,layerData,levelDefs,scene)
         local tilesetUid = nil
         for i, layerDef in ipairs(levelDefs.layers) do
             if layerDef.identifier == layerData.__identifier then
-                tilesetUid = layerDef.autoTilesetDefUid or layerDef.tilesetUid
+                tilesetUid = layerDef.autoTilesetDefUid or layerDef.tilesetDefUid
                 break
             end
         end
@@ -44,10 +44,10 @@ function TileGraphicsLayer.new(inst,layerData,levelDefs,scene)
         end
         -- Did we find a tileset?
         if inst.tileSet then
-            print('Successfully loaded tileset!')
+            Console.log('Successfully loaded tileset!')
             inst:redrawGfxCanvas()
         else
-            print('Error loading tileset')
+            Console.error('Error loading tileset')
         end
     end
 

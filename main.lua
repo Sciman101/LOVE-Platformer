@@ -1,3 +1,6 @@
+-- Global stuff
+require 'src.debug.console'
+
 local Actions = require 'src.actions'
 local Entity = require 'src.entity.entity'
 local EntityPlayer = require 'src.entity.entityPlayer'
@@ -12,6 +15,9 @@ actions:bind('d','right')
 actions:bind('a','left')
 actions:bind('space','jump')
 actions:bind('`','console')
+
+-- Scenemanager
+local sceneManager = require 'src.scene.scenemanager'
 
 -- Define the base scene
 local scene
@@ -30,9 +36,21 @@ end
 -- Update custom key table
 function love.keypressed(key)
 	actions:keyStateChanged(key,true)
+
+	-- Toggle console
+	if actions:getActionPressed('console') then
+		Console.visible = not Console.visible
+	else
+	-- Special character
+	Console.keypressed(key)
 end
 function love.keyreleased(key)
 	actions:keyStateChanged(key,false)
+end
+-- Feed text input to console
+function love.textinput(t)
+	-- Feed input to console
+	Console.textinput(t)
 end
 
 -- Update player and key data
@@ -53,4 +71,7 @@ function love.draw()
 	-- Reset canvas and draw scaled up
 	love.graphics.setCanvas()
 	love.graphics.draw(canvas,0,0,0,2)
+
+	-- Draw console
+	Console.draw()
 end
