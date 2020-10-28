@@ -1,13 +1,10 @@
 local Class = require 'src.class'
 
-local Actions = Class('Actions')
-
--- Constructor
-function Actions.new(inst)
-	inst.binds = {}
-	inst.actions = {}
-	inst.actions_prev = {}
-end
+Actions = {
+	binds = {},
+	actions = {},
+	actions_prev = {}
+}
 
 -- When a key is pressed or released
 function Actions:keyStateChanged(key,state)
@@ -39,5 +36,3 @@ end
 function Actions:getActionReleased(action)
 	return not self.actions[action] and self.actions_prev[action]
 end
-
-return Actions

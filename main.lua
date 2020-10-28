@@ -1,7 +1,8 @@
--- Global stuff
+-- Singletons stuff
 require 'src.debug.console'
+require 'src.actions'
 
-local Actions = require 'src.actions'
+-- Individual stuff
 local Entity = require 'src.entity.entity'
 local EntityPlayer = require 'src.entity.entityPlayer'
 local Tilemap = require 'src.tilemap'
@@ -10,14 +11,10 @@ local Scene = require 'src.scene.scene'
 local canvas
 
 -- Define input bindings
-local actions = Actions()
-actions:bind('d','right')
-actions:bind('a','left')
-actions:bind('space','jump')
-actions:bind('`','console')
-
--- Scenemanager
-local sceneManager = require 'src.scene.scenemanager'
+Actions:bind('d','right')
+Actions:bind('a','left')
+Actions:bind('space','jump')
+Actions:bind('`','console')
 
 -- Define the base scene
 local scene
@@ -32,29 +29,29 @@ function love.load()
 
 	-- Load scene
 	scene = Scene('/assets/scenes/test.json','Level')
-	
 end
 
 -- Update custom key table
 function love.keypressed(key, scancode, isrepeat)
 	-- Action system
 	if not isrepeat then
-		actions:keyStateChanged(key,true)
+		Actions:keyStateChanged(key,true)
 	end
 	-- Toggle console
-	if actions:getActionPressed('console') then
+	if Actions:getActionPressed('console') then
 		Console.visible = not Console.visible
 	else
 		-- Pass other input to console
 		Console.keypressed(key)
 	end
 end
+-- Release key actions
 function love.keyreleased(key)
-	actions:keyStateChanged(key,false)
+	Actions:keyStateChanged(key,false)
 end
 -- Feed text input to console
 function love.textinput(t)
-	if not actions:getActionPressed('console') then
+	if not Actions:getActionPressed('console') then
 		-- Feed input to console
 		Console.textinput(t)
 	end
@@ -63,7 +60,7 @@ end
 -- Update player and key data
 function love.update(dt)
 	scene:update(dt)
-	actions:update()
+	Actions:update()
 end
 
 -- Draw scene
