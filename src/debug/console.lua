@@ -16,6 +16,8 @@ Console = {
     --GENERIC
     visible = false,
     commands = require 'src.debug.commands',
+    suggestedCommands = {},
+    suggestedCommandIndex = 0,
     commandHistory = {},
     commandHistoryIndex = 0
 }
@@ -54,6 +56,10 @@ function Console.keypressed(key)
     -- Backspace
     if key == 'backspace' then
         Console.consoleLine = Console.consoleLine:sub(1,#Console.consoleLine-1)
+        -- Get out of history thing
+        Console.commandHistoryIndex = 0
+        -- Find new suggestions
+        Console:findSuggestions()
 
     elseif key == 'return' then
         -- Execute current command
@@ -73,6 +79,7 @@ function Console.keypressed(key)
         Console.commandHistoryIndex = 0
         -- Clear console line
         Console.consoleLine = ''
+        Console:findSuggestions()
 
     elseif key == 'up' or key == 'down' then
         -- Scroll through history
@@ -92,20 +99,61 @@ function Console.keypressed(key)
     
     elseif key == 'tab' then
         -- Autocomplete
-        local current = Console.consoleLine
-        for k, v in pairs(Console.commands) do
-            if string.find(k,current) == 1 then
-                Console.consoleLine = k
-                break
+        local i = Console.suggestedCommandIndex
+        i = i + 1
+        if i > #Console.suggestedCommands then
+            i = 0
+            Console.consoleLine = ''
+        else
+            Console.consoleLine = Console.suggestedCommands[i]
+        end
+        
+        Console.suggestedCommandIndex = i
+
+    elseif key == 'c' or key == 'v' or key == 'x' then
+        -- Check for modifier key
+        if love.keyboard.isDown('lctrl') or love.keyboard.isDown('rctrl') then
+            -- Copy or paste text
+            if key == 'v' then 
+                Console.consoleLine = love.system.getClipboardText()
+            elseif (key == 'c' or key == 'x') and #Console.consoleLine > 0 then
+                love.system.setClipboardText(Console.consoleLine)
+                Console.log('Console line copied to clipboard')
+                -- Cut
+                if key == 'x' then
+                    Console.consoleLine = ''
+                    Console:findSuggestions()
+                end
             end
         end
-
     end
 end
 function Console.textinput(text)
     if not Console.visible then return end
     Console.consoleLine = Console.consoleLine .. text
+    Console:findSuggestions()
 end
+
+-- Find suggested commands based on input
+function Console:findSuggestions()
+    -- Clear table
+    self.suggestedCommands = {}
+
+    -- Do we have anything to work with?
+    if self.consoleLine ~= '' then
+        for k,cmd in pairs(self.commands) do
+            if string.find(k,self.consoleLine) == 1 then
+                table.insert(self.suggestedCommands,k)
+            end
+        end
+    end
+
+    -- Move cursor
+    if self.suggestedCommandIndex > #self.suggestedCommands then
+        self.suggestedCommandIndex = 0
+    end
+end
+
 
 -- Actually draw the console
 function Console.draw(x,y)
@@ -154,6 +202,25 @@ function Console.draw(x,y)
             -- concatenate prefix:
             yoff = yoff + textObj:getHeight() + 2
             if i == 0 then yoff = yoff + 16 end
+        end
+
+        -- Draw suggested commands
+        if #Console.suggestedCommands > 0 and Console.commandHistoryIndex == 0 then
+            yoff = textObj:getHeight()
+            for i=1,#Console.suggestedCommands do
+                textObj:set(Console.suggestedCommands[i])
+                love.graphics.setColor(0,0,0,0.9)
+                love.graphics.rectangle('fill',x,y+yoff,textObj:getDimensions())
+
+                if i == Console.suggestedCommandIndex then
+                    love.graphics.setColor(1,1,0)
+                else
+                    love.graphics.setColor(1,1,1)
+                end
+
+                love.graphics.draw(textObj, x, y  + yoff)
+                yoff = yoff + textObj:getHeight() + 2
+            end
         end
 
         love.graphics.setColor(1,1,1)

@@ -13,6 +13,18 @@ commands.echo = setmetatable({
         end
     end
 })
+commands.ecto = setmetatable({
+    desc = 'Prints every parameter passed to it',
+    usage = 'ecto <message> <message 2> <...>'
+},{
+    __call = function(self,args)
+        for i,v in ipairs(args) do
+            if i ~= 1 then
+                Console.log(v)
+            end
+        end
+    end
+})
 
 -- Console clear command
 commands.clear = setmetatable({
