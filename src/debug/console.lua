@@ -15,7 +15,9 @@ Console = {
     consoleLine = '',
     --GENERIC
     visible = false,
-    commands = require 'src.debug.commands'
+    commands = require 'src.debug.commands',
+    commandHistory = {},
+    commandHistoryIndex = 0
 }
 
 
@@ -52,38 +54,66 @@ function Console.keypressed(key)
     -- Backspace
     if key == 'backspace' then
         Console.consoleLine = Console.consoleLine:sub(1,#Console.consoleLine-1)
+
     elseif key == 'return' then
         -- Execute current command
+        if #Console.consoleLine == 0 then return end
 
         -- Split command into parameters
         local args = {}
-        local str
-        for str in Console.consoleLine:gmatch("[^%s]+") do
-            table.insert(args,str)
-        end
+        Console.consoleLine:gsub("[^%s]+", function(str) table.insert(args, str) end)
 
         -- Make sure the command exists
         if #args >= 1 and Console.commands[args[1]] then
-
-            Console.commands[args[1]].func(args)
-
+            Console.commands[args[1]](args)
         else
             Console.log("Unknown command " .. args[1])
         end
+        table.insert(Console.commandHistory,1,Console.consoleLine)
+        Console.commandHistoryIndex = 0
         -- Clear console line
         Console.consoleLine = ''
+
+    elseif key == 'up' or key == 'down' then
+        -- Scroll through history
+        local i = Console.commandHistoryIndex
+        if key == 'up' then i = i + 1
+        elseif key == 'down' then i = i - 1 end
+        -- Clamp
+        if i < 0 then i = 0 
+        elseif i > #Console.commandHistory then i = #Console.commandHistory end
+        -- Update
+        if i ~= 0 then
+            Console.consoleLine = Console.commandHistory[i]
+        else
+            Console.consoleLine = ''
+        end
+        Console.commandHistoryIndex = i
+    
+    elseif key == 'tab' then
+        -- Autocomplete
+        local current = Console.consoleLine
+        for k, v in pairs(Console.commands) do
+            if string.find(k,current) == 1 then
+                Console.consoleLine = k
+                break
+            end
+        end
+
     end
 end
 function Console.textinput(text)
     if not Console.visible then return end
-    if text ~= '`' then
-        Console.consoleLine = Console.consoleLine .. text
-    end
+    Console.consoleLine = Console.consoleLine .. text
 end
 
 -- Actually draw the console
 function Console.draw(x,y)
     if Console.visible then
+
+        -- Throw a background on there so it's more bearable to look at
+        love.graphics.setColor(0,0,0,0.5)
+        love.graphics.rectangle('fill',0,0,love.graphics.getDimensions())
 
         local textObj = love.graphics.newText(love.graphics.getFont(),'')
 
@@ -122,7 +152,8 @@ function Console.draw(x,y)
             love.graphics.setColor(s.r, s.g, s.b)
             love.graphics.draw(textObj, x, y  + yoff)
             -- concatenate prefix:
-            yoff = yoff + textObj:getHeight()
+            yoff = yoff + textObj:getHeight() + 2
+            if i == 0 then yoff = yoff + 16 end
         end
 
         love.graphics.setColor(1,1,1)

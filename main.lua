@@ -28,29 +28,36 @@ function love.load()
 	canvas:setFilter( "nearest", "nearest" )
 	love.graphics.setDefaultFilter('nearest', 'nearest', 0)
 
+	love.keyboard.setKeyRepeat(true)
+
 	-- Load scene
 	scene = Scene('/assets/scenes/test.json','Level')
 	
 end
 
 -- Update custom key table
-function love.keypressed(key)
-	actions:keyStateChanged(key,true)
-
+function love.keypressed(key, scancode, isrepeat)
+	-- Action system
+	if not isrepeat then
+		actions:keyStateChanged(key,true)
+	end
 	-- Toggle console
 	if actions:getActionPressed('console') then
 		Console.visible = not Console.visible
 	else
-	-- Special character
-	Console.keypressed(key)
+		-- Pass other input to console
+		Console.keypressed(key)
+	end
 end
 function love.keyreleased(key)
 	actions:keyStateChanged(key,false)
 end
 -- Feed text input to console
 function love.textinput(t)
-	-- Feed input to console
-	Console.textinput(t)
+	if not actions:getActionPressed('console') then
+		-- Feed input to console
+		Console.textinput(t)
+	end
 end
 
 -- Update player and key data
@@ -68,10 +75,10 @@ function love.draw()
 	love.graphics.clear(0,0,0)
 	scene:draw()
 	
+	-- Draw console
+	Console.draw()
+
 	-- Reset canvas and draw scaled up
 	love.graphics.setCanvas()
 	love.graphics.draw(canvas,0,0,0,2)
-
-	-- Draw console
-	Console.draw()
 end
